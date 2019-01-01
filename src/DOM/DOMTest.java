@@ -1,6 +1,14 @@
 package DOM;
+import java.io.File;
+
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -9,19 +17,16 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 public class DOMTest {
+	
 
 	/**
 	 * 解析xml文件
 	 */
 	public void xmlParser() {
 		
-		// 创建一个DocumentBuilderFactory的对象
-		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-		
 		try {
-			
-			// 创建DocumentBuilder对象
-			DocumentBuilder db = dbf.newDocumentBuilder();
+			// 提取代码, 提高复用
+			DocumentBuilder db = getDocumentBuilder();
 			
 			// 通过DocumentBuilder对象的parser方法加载.xml文件到当前项目
 			Document document = db.parse("books.xml");
@@ -103,8 +108,60 @@ public class DOMTest {
 			e.printStackTrace();
 		}
 	}
+
+	private DocumentBuilder getDocumentBuilder() throws ParserConfigurationException {
+		// 创建一个DocumentBuilderFactory的对象
+		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+		
+		// 创建DocumentBuilder对象
+		DocumentBuilder db = dbf.newDocumentBuilder();
+		return db;
+	}
+	
+	/**
+	 * 生成XML
+	 * xml 中 standalone = "yes" 表示没有dtd和schema说明文档
+	 */
+	public void createXML() {
+		try {
+			DocumentBuilder db = getDocumentBuilder();
+			Document document = db.newDocument();
+			
+			// 设置 standalone = "yes"
+			document.setXmlStandalone(true);
+			
+			Element bookstore = document.createElement("bookStore");
+			
+			// 向bookstore根节点中添加子节点book
+			Element book = document.createElement("book");
+			Element name = document.createElement("name");
+			
+			// 向标签添加文本内容
+			name.setTextContent("小王子");
+			
+			// 向标签添加属性
+			book.setAttribute("id", "1");
+			
+			// 将book节点添加到bookstore根节点中
+			bookstore.appendChild(book);
+			
+			// 将bookstore节点(已经包含了book)添加dom树中
+			document.appendChild(bookstore);
+			
+			TransformerFactory tff = TransformerFactory.newInstance();
+			Transformer tf = tff.newTransformer();
+			
+			// dom树的合理换行
+			tf.setOutputProperty(OutputKeys.INDENT, "yes");
+			tf.transform(new DOMSource(document), new StreamResult(new File("books1.xml")));
+			
+		}catch(Exception e) {
+			e.printStackTrace();
+		}
+	}
+
 	
 	public static void main(String[] args) {
-		new DOMTest().xmlParser();
+		new DOMTest().createXML();
 	}
 }
